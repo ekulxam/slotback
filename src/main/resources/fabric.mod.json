@@ -1,0 +1,46 @@
+{
+	"schemaVersion": 1,
+	"id": "slotback",
+	"version": "${version}",
+	"name": "Slotback",
+	"description": "BackSlot but actually good",
+	"authors": [
+		"Survivalblock"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "MIT-0",
+	"icon": "assets/slotback/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+          "survivalblock.slotback.common.Slotback"
+		],
+		"client": [
+			"survivalblock.slotback.client.SlotbackClient"
+		],
+		"cardinal-components-entity": [
+			"survivalblock.slotback.common.init.SlotbackEntityComponents"
+		]
+	},
+	"mixins": [
+		"slotback.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.15.11",
+		"minecraft": "~1.19.2",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	},
+	"accessWidener": "slotback.accesswidener",
+	"custom": {
+		"cardinal-components": [
+			"slotback:holding_back_tool"
+		]
+	}
+}

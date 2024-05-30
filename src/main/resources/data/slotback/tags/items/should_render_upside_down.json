@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#c:swords",
+      "required": false
+    },
+    {
+      "id": "#c:bows",
+      "required": false
+    },
+    {
+      "id": "#minecraft:arrows",
+      "required": false
+    },
+    {
+      "id": "amarite:amarite_disc",
+      "required": false
+    }
+  ]
+}
