@@ -1,6 +1,7 @@
 package survivalblock.slotback.mixin.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
@@ -39,7 +40,6 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
 
     @Inject(at = @At(value = "INVOKE", target = "net/minecraft/screen/slot/Slot.<init>(Lnet/minecraft/inventory/Inventory;III)V"), method = "setSelectedTab")
     private void addCreativeTrinketSlots(ItemGroup g, CallbackInfo info) {
-        this.doNullChecks();
         List<Slot> slots = new ArrayList<>(this.client.player.playerScreenHandler.slots);
         Collections.reverse(slots); // reverse the collection so that it finds the backslot earlier
 
@@ -51,12 +51,12 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
         for (Slot slot : slots) {
             if (slot instanceof Backslot backslot) {
                 int xOff = 50;
-                if (Slotback.isTrinketsLoaded && TrinketsCharmCompat.isCharmLoaded(this.client.player)) {
+                if (FabricLoader.getInstance().isModLoaded("trinkets") && TrinketsCharmCompat.isCharmLoaded(this.client.player)) {
                     xOff += 38;
                 }
                 int yOff = -24;
                 // add the backslot after the delete item in the creative tab
-                this.handler.slots.add(new CreativeBackslot(backslot, backslot.getIndex(), backslot.x + xOff, backslot.y + yOff));
+                this.handler.slots.add(new CreativeBackslot(backslot, backslot.getIndex(), Backslot.DEFAULT_X + xOff, Backslot.DEFAULT_Y + yOff));
                 /*
                  * END CREDIT
                  *
@@ -88,21 +88,14 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
     @Inject(method = "drawBackground", at = @At(value = "RETURN"))
     public void drawCreativeBlankSlot(MatrixStack matrices, float delta, int mouseX, int mouseY, CallbackInfo info) {
         // manually render the empty slot background
-        this.doNullChecks();
         if (selectedTab != ItemGroup.INVENTORY.getIndex()) {
             return;
         }
         int xOff = 0;
-        if (Slotback.isTrinketsLoaded && TrinketsCharmCompat.isCharmLoaded(this.client.player)) {
+        if (FabricLoader.getInstance().isModLoaded("trinkets") && TrinketsCharmCompat.isCharmLoaded(this.client.player)) {
             xOff += 38;
         }
         RenderSystem.setShaderTexture(0, SlotbackClient.BACK_TEXTURE);
         DrawableHelper.drawTexture(matrices, this.x + 126 + xOff, this.y + 19, 0.0F, 0.0F, 18, 18, 18, 18);
-    }
-
-    @Unique
-    private void doNullChecks() {
-        Objects.requireNonNull(this.client, "The client cannot be null when adding a creative backslot!");
-        Objects.requireNonNull(this.client.player, "The client player cannot be null when adding a creative backslot!");
     }
 }

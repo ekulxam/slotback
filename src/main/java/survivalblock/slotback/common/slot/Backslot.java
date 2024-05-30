@@ -9,15 +9,17 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.Identifier;
 import survivalblock.slotback.client.sprite.SlotbackSprites;
 import survivalblock.slotback.common.Slotback;
-import survivalblock.slotback.common.compat.TrinketsCharmCompat;
 import survivalblock.slotback.common.component.HoldingBackToolComponent;
 
 public class Backslot extends Slot {
 
+    public static final int DEFAULT_X = 77;
+    public static final int DEFAULT_Y = 44;
+
     private final PlayerEntity player;
 
-    public Backslot(Inventory inventory, PlayerEntity player) {
-        super(inventory, Slotback.SLOT_ID, 77, 44 - (Slotback.isTrinketsLoaded && TrinketsCharmCompat.isCharmLoaded(player) ? 18 : 0));
+    public Backslot(Inventory inventory, PlayerEntity player, int xOffset, int yOffset) {
+        super(inventory, Slotback.SLOT_ID, DEFAULT_X + xOffset, DEFAULT_Y + yOffset);
         this.player = player;
     }
 

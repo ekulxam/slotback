@@ -5,14 +5,6 @@
   "slots": [
     "extra1/charm",
     "extra2/charm",
-    "extra3/charm",
-    "extra4/charm",
-    "extra5/charm",
-    "extra6/charm",
-    "extra7/charm",
-    "extra8/charm",
-    "extra9/charm",
-    "extra10/charm",
-    "extra11/charm"
+    "extra3/charm"
   ]
 }

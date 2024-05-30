@@ -63,8 +63,7 @@ dependencies {
 	include(modImplementation "dev.onyxstudios.cardinal-components-api:cardinal-components-entity:${project.cardinal_components_api_version}")
 	modRuntimeOnly "maven.modrinth:modmenu:${project.modmenu_version}"
 	// modRuntimeOnly "maven.modrinth:notenoughcrashes:${project.crash_version}"
-	modCompileOnly "maven.modrinth:trinkets:${project.trinkets_version}"
-	modRuntimeOnly "maven.modrinth:trinkets:${project.trinkets_version}"
+	modImplementation "maven.modrinth:trinkets:${project.trinkets_version}"
 }
 
 processResources {

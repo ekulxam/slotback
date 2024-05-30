@@ -4,6 +4,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.entity.event.v1.FabricElytraItem;
 import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -48,7 +49,7 @@ public class BackToolFeatureRenderer extends HeldItemFeatureRenderer<AbstractCli
             Item backslotItem = backslotStack.getItem();
 
             boolean isATrident = backslotItem instanceof TridentItem;
-            boolean isLongsword = Slotback.isAmariteLoaded && AmariteCompatLongswordRenderer.isALongsword(backslotItem);
+            boolean isLongsword = FabricLoader.getInstance().isModLoaded("amarite") && AmariteCompatLongswordRenderer.isALongsword(backslotItem);
 
             if (isATrident) {
                 matrixStack.multiply(Vec3f.POSITIVE_Y.getDegreesQuaternion(52.0F));
@@ -85,7 +86,7 @@ public class BackToolFeatureRenderer extends HeldItemFeatureRenderer<AbstractCli
                 }
             }
             ModelTransformation.Mode mode;
-            if (isATrident || isLongsword) {
+            if (isATrident) {
                 mode = ModelTransformation.Mode.THIRD_PERSON_RIGHT_HAND;
             } else {
                 mode = ModelTransformation.Mode.FIXED;
