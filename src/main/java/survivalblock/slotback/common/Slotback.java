@@ -2,6 +2,7 @@ package survivalblock.slotback.common;
 
 import net.fabricmc.api.ModInitializer;
 
+import net.fabricmc.fabric.api.loot.v2.LootTableEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;

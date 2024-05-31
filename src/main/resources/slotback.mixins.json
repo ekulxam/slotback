@@ -6,7 +6,8 @@
     "PlayerEntityMixin",
     "PlayerInventoryMixin",
     "PlayerScreenHandlerMixin",
-    "SlotAccessor"
+    "SlotAccessor",
+    "EntitySlotLoaderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

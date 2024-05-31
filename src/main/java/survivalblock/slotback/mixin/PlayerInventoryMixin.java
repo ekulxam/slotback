@@ -1,16 +1,15 @@
 package survivalblock.slotback.mixin;
 
 import com.google.common.collect.ImmutableList;
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
-import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,19 +18,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import survivalblock.slotback.common.Slotback;
 import survivalblock.slotback.common.component.HoldingBackToolComponent;
+import survivalblock.slotback.common.slot.Backslot;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Debug(export = true)
-@Mixin(PlayerInventory.class)
+@Mixin(value = PlayerInventory.class, priority = 1100)
 public abstract class PlayerInventoryMixin implements Inventory {
     @Shadow
     @Final
     @Mutable
     private List<DefaultedList<ItemStack>> combinedInventory;
-
-    @Shadow public abstract int getSlotWithStack(ItemStack stack);
 
     @Shadow @Final public PlayerEntity player;
     @Unique
@@ -57,9 +56,9 @@ public abstract class PlayerInventoryMixin implements Inventory {
         tag.add(nbt);
     }
 
-    @Inject(method = "readNbt", at = @At("RETURN"))
+    @Inject(method = "readNbt", at = @At("HEAD"))
     public void readBackslot(NbtList tag, CallbackInfo info) {
-        this.backSlot.clear();
+        this.resetBackslot();
         for (int i = 0; i < tag.size(); ++i) {
             NbtCompound compoundTag = tag.getCompound(i);
             if (!compoundTag.contains("Slotback")) {
@@ -77,6 +76,8 @@ public abstract class PlayerInventoryMixin implements Inventory {
             if (itemStack != null && !itemStack.isEmpty()) {
                 this.backSlot.set(0, itemStack);
             }
+            // We set priority to 1100 to inject this specific method after the default 1000s
+            tag.remove(compoundTag);
         }
     }
 
@@ -99,9 +100,28 @@ public abstract class PlayerInventoryMixin implements Inventory {
     private <E> boolean noDroppingBackslot(List<ItemStack> instance, int index, E stack) {
         if (instance.equals(backSlot)) {
             // stop duplication
-            player.getInventory().setStack(Slotback.SLOT_ID, ItemStack.EMPTY);
+            this.resetBackslot();
             return false;
         }
         return true;
+    }
+
+    @Unique
+    private void resetBackslot() {
+        PlayerInventory playerInventory = player.getInventory();
+        HoldingBackToolComponent.get(player).setHoldingBackWeapon(false, true);
+        playerInventory.setStack(Slotback.SLOT_ID, ItemStack.EMPTY);
+    }
+
+    @Inject(method = "updateItems", at = @At("RETURN"))
+    private void tickBackslot(CallbackInfo ci) {
+        List<Slot> slots = new ArrayList<>(player.playerScreenHandler.slots);
+        Collections.reverse(slots); // reverse the collection so that it finds the backslot earlier
+        for (Slot slot : slots) {
+            if (slot instanceof Backslot backslot) {
+                backslot.tick();
+                return;
+            }
+        }
     }
 }
