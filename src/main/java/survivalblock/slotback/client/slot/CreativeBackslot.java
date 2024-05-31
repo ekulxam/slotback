@@ -10,8 +10,8 @@ import survivalblock.slotback.common.slot.Backslot;
 
 public class CreativeBackslot extends CreativeInventoryScreen.CreativeSlot {
 
-    public CreativeBackslot(Backslot backslot, int invSlot, int x, int y) {
-        super(backslot, invSlot, x, y);
+    public CreativeBackslot(Backslot backslot, int index, int x, int y) {
+        super(backslot, index, x, y);
     }
 
     @Nullable

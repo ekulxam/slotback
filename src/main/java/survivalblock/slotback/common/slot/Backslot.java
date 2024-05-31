@@ -1,7 +1,8 @@
 package survivalblock.slotback.common.slot;
 
 import com.mojang.datafixers.util.Pair;
-import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
@@ -9,10 +10,7 @@ import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.Identifier;
 import survivalblock.slotback.client.sprite.SlotbackSprites;
-import survivalblock.slotback.common.Slotback;
-import survivalblock.slotback.common.compat.TrinketsCharmCompat;
 import survivalblock.slotback.common.component.HoldingBackToolComponent;
-import survivalblock.slotback.mixin.SlotAccessor;
 
 public class Backslot extends Slot {
 
@@ -20,28 +18,18 @@ public class Backslot extends Slot {
     public static final int DEFAULT_Y = 44;
 
     private final PlayerEntity player;
-    private final boolean onServer;
 
-    public Backslot(Inventory inventory, PlayerEntity player, int xOffset, int yOffset, boolean onServer) {
-        super(inventory, Slotback.SLOT_ID, DEFAULT_X + xOffset, DEFAULT_Y + yOffset);
+    public Backslot(Inventory inventory, int index, PlayerEntity player, int xOffset, int yOffset) {
+        super(inventory, index, DEFAULT_X + xOffset, DEFAULT_Y + yOffset);
         this.player = player;
-        this.onServer = onServer;
+    }
+
+    @Override
+    protected void onCrafted(ItemStack stack) {
+        super.onCrafted(stack);
     }
 
     public void tick() {
-        if (onServer) {
-            return;
-        }
-        if (this.x != DEFAULT_X || this.y != DEFAULT_Y) {
-            return;
-        }
-        if (!FabricLoader.getInstance().isModLoaded("trinkets")) {
-            return;
-        }
-        if (TrinketsCharmCompat.isCharmLoaded(this.player)) {
-            ((SlotAccessor) this).setX(this.x + 4 * 19 - 1);
-            ((SlotAccessor) this).setY(this.y + 19);
-        }
     }
 
     @Override
@@ -50,14 +38,40 @@ public class Backslot extends Slot {
     }
 
     @Override
+    protected void onTake(int amount) {
+        super.onTake(amount);
+    }
+
+    @Override
+    public void onQuickTransfer(ItemStack newItem, ItemStack original) {
+        super.onQuickTransfer(newItem, original);
+        stopHoldingBackWeapon();
+    }
+
+    private void stopHoldingBackWeapon() {
+        HoldingBackToolComponent.get(this.player).setHoldingBackWeapon(false, true);
+    }
+
+    @Override
     public void onTakeItem(PlayerEntity player, ItemStack stack) {
         super.onTakeItem(player, stack);
-        HoldingBackToolComponent.get(player).setHoldingBackWeapon(false, true);
+        stopHoldingBackWeapon();
     }
 
     @Override
     public void setStack(ItemStack stack) {
         super.setStack(stack);
-        HoldingBackToolComponent.get(player).setHoldingBackWeapon(false, true);
+        stopHoldingBackWeapon();
+    }
+
+    @SuppressWarnings("RedundantMethodOverride")
+    public boolean canInsert(ItemStack stack) {
+        return true;
+    }
+
+    @SuppressWarnings("RedundantMethodOverride")
+    @Override
+    public boolean canTakeItems(PlayerEntity playerEntity) {
+        return true;
     }
 }

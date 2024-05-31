@@ -7,7 +7,6 @@ import net.minecraft.item.ItemStack;
 import survivalblock.slotback.common.Slotback;
 import survivalblock.slotback.common.init.SlotbackEntityComponents;
 import survivalblock.slotback.common.packet.HoldBackToolPacket;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;

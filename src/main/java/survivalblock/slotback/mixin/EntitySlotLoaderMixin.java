@@ -19,7 +19,7 @@ public class EntitySlotLoaderMixin {
         if (slot.getGroup().equals("extra1") && name.equals("charm")) {
             TrinketsMain.LOGGER.warn(name + " slot in group " + slot.getGroup() + " was removed by slotback!");
             Slotback.LOGGER.info("I can confirm, this in fact did happen.");
-            return false;
+            return true;
         }
         return true;
     }

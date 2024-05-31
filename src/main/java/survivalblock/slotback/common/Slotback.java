@@ -13,7 +13,7 @@ import survivalblock.slotback.common.packet.SwitchPacket;
 public class Slotback implements ModInitializer {
 	public static final String MOD_ID = "slotback";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID + " " + "\uD83D\uDD25");
-	public static final int SLOT_ID = 41;
+	public static final int SLOT_ID = 51;
 
 	@Override
 	public void onInitialize() {
