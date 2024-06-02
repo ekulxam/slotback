@@ -3,10 +3,10 @@
   "package": "survivalblock.slotback.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "EntitySlotLoaderMixin",
     "PlayerEntityMixin",
     "PlayerInventoryMixin",
-    "PlayerScreenHandlerMixin"
+    "PlayerScreenHandlerMixin",
+    "ServerPlayerEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

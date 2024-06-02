@@ -3,6 +3,7 @@ package survivalblock.slotback.mixin;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
@@ -36,5 +37,13 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 		if (HoldingBackToolComponent.get((PlayerEntity) (Object) this).isHoldingBackWeapon()) {
 			cir.setReturnValue(this.getInventory().getStack(Slotback.SLOT_ID));
 		}
+	}
+
+	@Inject(method = "onDeath", at = @At("HEAD"))
+	private void stopHoldingWeaponOnDeath(DamageSource damageSource, CallbackInfo ci) {
+		if (Slotback.keepBackslotOnDeath) {
+			return;
+		}
+		HoldingBackToolComponent.get((PlayerEntity) (Object) this).setHoldingBackWeapon(false, true);
 	}
 }

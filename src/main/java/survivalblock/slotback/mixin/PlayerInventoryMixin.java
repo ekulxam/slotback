@@ -1,7 +1,5 @@
 package survivalblock.slotback.mixin;
 
-import com.google.common.collect.ImmutableList;
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.minecraft.block.BlockState;
@@ -17,6 +15,7 @@ import net.minecraft.util.collection.DefaultedList;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import survivalblock.slotback.common.Slotback;
@@ -26,27 +25,22 @@ import survivalblock.slotback.common.slot.Backslot;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 @Debug(export = true)
-@Mixin(value = PlayerInventory.class, priority = 1100)
+@Mixin(value = PlayerInventory.class, priority = 5000)
 public abstract class PlayerInventoryMixin implements Inventory {
-    @Shadow
-    @Final
-    @Mutable
-    private List<DefaultedList<ItemStack>> combinedInventory;
 
     @Shadow @Final public PlayerEntity player;
+
+    @Shadow public abstract int size();
+
     @Unique
     private DefaultedList<ItemStack> backslotList;
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onConstructed(PlayerEntity playerEntity, CallbackInfo info) {
         this.backslotList = DefaultedList.ofSize(1, ItemStack.EMPTY);
-        this.combinedInventory = new ArrayList<>(combinedInventory);
-        this.combinedInventory.add(backslotList);
-        this.combinedInventory = ImmutableList.copyOf(this.combinedInventory);
     }
 
     @Inject(method = "writeNbt", at = @At("RETURN"))
@@ -118,28 +112,44 @@ public abstract class PlayerInventoryMixin implements Inventory {
         playerInventory.setStack(Slotback.SLOT_ID, ItemStack.EMPTY);
     }
 
+    @ModifyArg(method = "updateItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;inventoryTick(Lnet/minecraft/world/World;Lnet/minecraft/entity/Entity;IZ)V"), index = 3)
+    private boolean notSelectedIfHoldingBackslot(boolean selected) {
+        return !HoldingBackToolComponent.get(this.player).isHoldingBackWeapon() && selected;
+    }
+
     @Inject(method = "updateItems", at = @At("RETURN"))
     private void tickBackslot(CallbackInfo ci) {
         List<Slot> slots = new ArrayList<>(player.playerScreenHandler.slots);
         Collections.reverse(slots); // reverse the collection so that it finds the backslot earlier
         for (Slot slot : slots) {
             if (slot instanceof Backslot backslot) {
+                backslot.getStack().inventoryTick(this.player.world, this.player, backslot.getIndex(), HoldingBackToolComponent.get(this.player).isHoldingBackWeapon());
                 backslot.tick();
                 return;
             }
         }
     }
 
+    @ModifyReturnValue(method = "size", at = @At("RETURN"))
+    private int addBackslotToSize(int original) {
+        return original + this.backslotList.size();
+    }
+
+    @Unique
+    private boolean equalsSlotId(int slot) {
+        return Slotback.SLOT_ID == slot || (this.size() - 1) == slot;
+    }
+
     @Inject(method = "getStack", at = @At("HEAD"), cancellable = true)
     private void getBackStack(int slot, CallbackInfoReturnable<ItemStack> cir) {
-        if (Slotback.SLOT_ID == slot) {
+        if (equalsSlotId(slot)) {
             cir.setReturnValue(backslotList.get(0));
         }
     }
 
     @Inject(method = "setStack", at = @At("HEAD"), cancellable = true)
     private void setBackStack(int slot, ItemStack stack, CallbackInfo ci) {
-        if (Slotback.SLOT_ID == slot) {
+        if (equalsSlotId(slot)) {
             backslotList.set(0, stack);
             ci.cancel();
         }
@@ -147,7 +157,7 @@ public abstract class PlayerInventoryMixin implements Inventory {
 
     @Inject(method = "removeStack(I)Lnet/minecraft/item/ItemStack;", at = @At("HEAD"), cancellable = true)
     private void removeBackStack(int slot, CallbackInfoReturnable<ItemStack> cir) {
-        if (Slotback.SLOT_ID == slot) {
+        if (equalsSlotId(slot)) {
             if (backslotList != null && !backslotList.get(0).isEmpty()) {
                 ItemStack itemStack = backslotList.get(0);
                 backslotList.set(0, ItemStack.EMPTY);
@@ -160,25 +170,24 @@ public abstract class PlayerInventoryMixin implements Inventory {
 
     @Inject(method = "removeStack(II)Lnet/minecraft/item/ItemStack;", at = @At("HEAD"), cancellable = true)
     private void removeBackStackCount(int slot, int amount, CallbackInfoReturnable<ItemStack> cir) {
-        if (Slotback.SLOT_ID == slot) {
+        if (equalsSlotId(slot)) {
             cir.setReturnValue(backslotList != null && !backslotList.get(0).isEmpty() ? Inventories.splitStack(backslotList, 0, amount) : ItemStack.EMPTY);
         }
     }
 
-    @ModifyExpressionValue(method = "removeOne", at = @At(value = "INVOKE", target = "Ljava/util/List;iterator()Ljava/util/Iterator;"))
-    private <E> Iterator<E> removeBackslotFromOne(Iterator<E> original) {
-        if (this.combinedInventory.contains(backslotList)) {
-            ArrayList<DefaultedList<ItemStack>> list = new ArrayList<>(this.combinedInventory);
-            list.remove(backslotList);
-            return (Iterator<E>) ImmutableList.of(list).iterator();
-        }
-        return original;
-    }
-
     @Inject(method = "getBlockBreakingSpeed", at = @At("HEAD"), cancellable = true)
-    private void accountForHeldItem(BlockState state, CallbackInfoReturnable<Float> cir) {
+    private void accountForHeldBackStack(BlockState state, CallbackInfoReturnable<Float> cir) {
         if (SlotbackEntityComponents.HOLDING_BACK_TOOL_COMPONENT.get(player).isHoldingBackWeapon()) {
             cir.setReturnValue(backslotList.get(0).getMiningSpeedMultiplier(state));
         }
+    }
+
+    @Inject(method = "dropAll", at = @At("RETURN"))
+    private void dropBackslot(CallbackInfo ci) {
+        if (Slotback.keepBackslotOnDeath) {
+            return;
+        }
+        this.player.dropItem(backslotList.get(0), true, false);
+        backslotList.set(0, ItemStack.EMPTY);
     }
 }

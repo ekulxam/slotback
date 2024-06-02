@@ -1,8 +1,8 @@
 package survivalblock.slotback.common.slot;
 
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
@@ -18,18 +18,23 @@ public class Backslot extends Slot {
     public static final int DEFAULT_Y = 44;
 
     private final PlayerEntity player;
+    private int ticksEmpty = 0;
 
     public Backslot(Inventory inventory, int index, PlayerEntity player, int xOffset, int yOffset) {
         super(inventory, index, DEFAULT_X + xOffset, DEFAULT_Y + yOffset);
         this.player = player;
     }
 
-    @Override
-    protected void onCrafted(ItemStack stack) {
-        super.onCrafted(stack);
-    }
-
     public void tick() {
+        if (this.getStack() == null || this.getStack().isEmpty()) {
+            HoldingBackToolComponent holdingBackToolComponent = HoldingBackToolComponent.get(player);
+            if (holdingBackToolComponent.isHoldingBackWeapon()) {
+                ticksEmpty++;
+                if (ticksEmpty > 2) {
+                    stopHoldingBackWeapon();
+                }
+            }
+        }
     }
 
     @Override
@@ -37,19 +42,9 @@ public class Backslot extends Slot {
         return Pair.of(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, SlotbackSprites.EMPTY_BACK_SLOT_TEXTURE);
     }
 
-    @Override
-    protected void onTake(int amount) {
-        super.onTake(amount);
-    }
-
-    @Override
-    public void onQuickTransfer(ItemStack newItem, ItemStack original) {
-        super.onQuickTransfer(newItem, original);
-        stopHoldingBackWeapon();
-    }
-
     private void stopHoldingBackWeapon() {
-        HoldingBackToolComponent.get(this.player).setHoldingBackWeapon(false, true);
+        HoldingBackToolComponent holdingBackToolComponent = HoldingBackToolComponent.get(this.player);
+        if (holdingBackToolComponent.isHoldingBackWeapon()) holdingBackToolComponent.setHoldingBackWeapon(false, true);
     }
 
     @Override
@@ -58,13 +53,8 @@ public class Backslot extends Slot {
         stopHoldingBackWeapon();
     }
 
-    @Override
-    public void setStack(ItemStack stack) {
-        super.setStack(stack);
-        stopHoldingBackWeapon();
-    }
-
     @SuppressWarnings("RedundantMethodOverride")
+    @Override
     public boolean canInsert(ItemStack stack) {
         return true;
     }
